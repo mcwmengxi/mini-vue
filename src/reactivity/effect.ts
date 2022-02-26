@@ -28,6 +28,8 @@ class ReactiveEffect{
 
     return fun
   }
+  // 当我们调用 stop 方法后，会清空其他对象对 effect 的依赖，
+  // 同时调用 onStop 回调，最后将 effect 的激活状态设置为 false
   stop(){
     // 删除掉对应的dep
     if(this.active){
@@ -78,6 +80,10 @@ export function track(target,property){
     dep = new Set()
     depsMap.set(property,dep)
   }
+  trackEffects(dep)
+}
+// 追踪依赖
+export function trackEffects(dep){
   // 看看 dep 之前有没有添加过，添加过的话 那么就不添加了
   if(dep.has(activeEffect)) return
 
@@ -86,8 +92,7 @@ export function track(target,property){
   activeEffect.deps.push(dep)
 
 }
-
-function isTracking(){
+export function isTracking(){
   return shouldTrack && activeEffect !== undefined;
 }
 
@@ -95,6 +100,10 @@ export function trigger(target,property){
   // 取出dep中的依赖,调用fn
   const depsMap = targetMaps.get(target)
   const dep = depsMap.get(property)
+  triggerEffects(dep)
+}
+
+export function triggerEffects(dep){
   for (const effect of dep) {
     if(effect.scheduler){
       effect.scheduler()
