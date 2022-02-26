@@ -19,6 +19,8 @@ describe('effect', () => {
     
   });
     it("should return runner when call effect", () => {
+    // effect调用的返回值是runner函数
+
     // 当调用 runner 的时候可以重新执行 effect.run
     // runner 的返回值就是用户给的 fn 的返回值
     let foo = 0;
@@ -33,6 +35,7 @@ describe('effect', () => {
     expect(runner()).toBe(3);
   });
 
+  // scheduler调度
   it("scheduler", () => {
     let dummy;
     let run: any;
@@ -71,12 +74,13 @@ describe('effect', () => {
     });
     obj.prop = 2;
     expect(dummy).toBe(2);
+    // stop阻止runner调用
     stop(runner);
-    obj.prop = 3;
-    // obj.prop++;
+    // obj.prop = 3;
+    obj.prop++;
     expect(dummy).toBe(2);
 
-    // stopped effect should still be manually callable
+    // 重新调用stopped effect should still be manually callable
     runner();
     expect(dummy).toBe(3);
   });
@@ -97,6 +101,7 @@ describe('effect', () => {
     );
 
     stop(runner);
+    // onStop监听stop到将会被调用
     expect(onStop).toBeCalledTimes(1);
   });
 });

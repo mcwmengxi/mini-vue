@@ -27,6 +27,7 @@ function createGetter(isReadonly = false){
         return isReadonly
       }
       const res = Reflect.get(target,property)
+      
 
       // 对象类型的数据转换
       if(isObject(res)){
