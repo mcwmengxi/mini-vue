@@ -1,4 +1,4 @@
-import { readonly, isReadonly } from "../reactive";
+import { readonly, isReadonly, isProxy } from "../reactive";
 
 describe("readonly", () => {
   it("should make nested values readonly", () => {
@@ -12,6 +12,9 @@ describe("readonly", () => {
     // 测试isReadonly嵌套功能
     expect(isReadonly(wrapped.bar)).toBe(true);
     expect(isReadonly(original.bar)).toBe(false);
+
+    // 测试isProxy的检测功能
+    expect(isProxy(wrapped)).toBe(true);
 
     expect(wrapped.foo).toBe(1);
   });

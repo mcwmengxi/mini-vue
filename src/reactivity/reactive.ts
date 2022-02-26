@@ -20,6 +20,10 @@ export function readonly(raw){
 export function shallowReadonly(raw){
   return createReactiveObject(raw, shallowReadonlyHandlers)
 }
+// 用于检查一个对象是否由reactive或者readonly(shallowReadonly)方法创建的代理
+export function isProxy(value){
+  return isReactive(value) || isReadonly(value)
+}
 
 export function isReactive(value){
   return !! value[ReactiveFlags.IS_REACTIVE]
