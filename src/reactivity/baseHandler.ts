@@ -1,4 +1,4 @@
-import { isObject } from './../shared/index';
+import { isObject, extend } from './../shared/index';
 import { track, trigger } from "./effect";
 import { ReactiveFlags, readonly, reactive } from './reactive'
 const set = createSetter()
@@ -16,8 +16,9 @@ function createSetter(){
 
 const get = createGetter()
 const readonlyGet = createGetter(true)
+const shallowReadonlyGet = createGetter(true,true)
 
-function createGetter(isReadonly = false){
+function createGetter(isReadonly = false, shallow = false){
   return function get(target, property, receiver){
       // console.log(target, property, receiver);
       // 判断键的类型
@@ -28,7 +29,10 @@ function createGetter(isReadonly = false){
       }
       const res = Reflect.get(target,property)
       
-
+      // 浅层只读
+      if(shallow){
+        return res
+      }
       // 对象类型的数据转换
       if(isObject(res)){
         return isReadonly ? readonly(res) : reactive(res)
@@ -59,3 +63,7 @@ export const readonlyHandlers = {
     return true
   }
 }
+
+export const shallowReadonlyHandlers = extend({},readonlyHandlers,{
+  get:shallowReadonlyGet
+})
