@@ -2,6 +2,7 @@
 
 # dependencies
 node_modules/
+commitID.md
 /.pnp
 .pnp.js
 .vscode
