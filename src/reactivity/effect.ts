@@ -2,7 +2,7 @@ import { extend } from "../shared";
 
 let activeEffect;
 let shouldTrack = false
-class ReactiveEffect{
+export default class ReactiveEffect{
   private _fn: any;
   public scheduler : Function | undefined;
   deps = [];
@@ -10,6 +10,7 @@ class ReactiveEffect{
   onStop?:()=>void
   constructor(fn, scheduler?:Function){
     this._fn = fn
+    // 它的调度运行的方式
     this.scheduler = scheduler
   }
 
