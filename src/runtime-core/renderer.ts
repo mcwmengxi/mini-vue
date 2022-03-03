@@ -1,6 +1,6 @@
 import { createComponentInstance, setupComponent } from "./component"
 
-export function render(vnode, container){
+export function render(vnode:any, container:any){
   patch(vnode,container)
 }
 
@@ -20,8 +20,11 @@ function mountcomponent(vnode,container){
 }
 
 function setupRenderEffect(instance,container){
-  // 调用组件实例的setup()方法
-  const subTree = instance.render()
-  
+  // 调用组件实例的render()
+  let subTree
+  if(instance.render){  
+   subTree = instance.render()
+  }
+
   patch(subTree,container)
 }
