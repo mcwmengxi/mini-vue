@@ -69,3 +69,25 @@ console.log(typeof str); // string
 -  支持 isProxy
 -  支持 shallowReadonly
 -  支持 proxyRefs
+
+
+
+
+
+## 初始化过程
+
+#### 流程图
+
+![img](https://s2.loli.net/2022/03/03/J1syVuEGtIgdO25.png)
+
+## 更新过程
+
+
+
+### 流程图
+
+![img](https://s2.loli.net/2022/03/03/C2w4rcHstvNWj8p.png)
+
+### 关键函数调用图
+
+![img](https://s2.loli.net/2022/03/03/BGP8oK6ArXTQt2c.png)

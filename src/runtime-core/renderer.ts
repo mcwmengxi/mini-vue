@@ -22,18 +22,19 @@ function processElement(vnode,container){
 function processComponent(vnode,container){
   mountcomponent(vnode,container)
 }
+// vnode==>initialVNode 更加语义化
+function mountcomponent(initialVNode,container){
+  const instance = createComponentInstance(initialVNode)
 
-function mountcomponent(vnode,container){
-  const instance = createComponentInstance(vnode)
-
+   // setup的时候给组件添加代理对象
   setupComponent(instance)
-  setupRenderEffect(instance,container)
+  setupRenderEffect(instance,initialVNode,container)
 }
 
 function mountElement(vnode,container){
-  // 创建真实dom
-
-  const el = document.createElement(vnode.type)
+  // 创建真实dom,同时把el放在VNode节点上
+  // const el = document.createElement(vnode.type)
+  const el = (vnode.el = document.createElement(vnode.type));
   const { children, props } = vnode
   // 处理子节点，是文本还是标签
   if(typeof children === 'string'){
@@ -56,12 +57,20 @@ function mountChildren(vnode,container){
     patch(v,container)
   });
 }
-function setupRenderEffect(instance,container){
-  // 调用组件实例的render()
-  let subTree
-  if(instance.render){  
-   subTree = instance.render()
-  }
 
+// render渲染dom
+function setupRenderEffect(instance,initialVNode,container){
+  // 调用组件实例的render()
+  // 绑定到代理对象上
+  const { proxy }  = instance
+  const subTree = instance.render.call(proxy)
+  // if(instance.render){  
+  //  subTree 
+  // }
+
+  // 递归遍历
   patch(subTree,container)
+
+  initialVNode.el = subTree.el
+
 }
