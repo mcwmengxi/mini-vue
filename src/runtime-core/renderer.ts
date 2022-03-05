@@ -10,6 +10,7 @@ export function render(vnode:any, container:any){
 function patch(vnode,container){
   // 原生标签,采用位运算符比较
   const { shapeFlag } = vnode
+
   // 按位与 相等的判断
   if(shapeFlag & ShapeFlags.ELEMENT){
     processElement(vnode,container)

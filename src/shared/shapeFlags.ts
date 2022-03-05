@@ -15,3 +15,5 @@ export const enum ShapeFlags {
   // COMPONENT_KEPT_ALIVE = 1 << 9, // kept alive组件
   COMPONENT = ShapeFlags.STATEFUL_COMPONENT | ShapeFlags.FUNCTIONAL_COMPONENT // 普通组件 | 函数组件
 }
+
+
