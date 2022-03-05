@@ -28,6 +28,7 @@ function processComponent(vnode,container){
 }
 // vnode==>initialVNode 更加语义化
 function mountcomponent(initialVNode,container){
+  // 创建组件实例
   const instance = createComponentInstance(initialVNode)
 
    // setup的时候给组件添加代理对象

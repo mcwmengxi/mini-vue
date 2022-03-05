@@ -1,3 +1,4 @@
+import { isObject } from './../shared/index';
 import { track, trigger } from "./effect";
 import { mutableHandlers, readonlyHandlers, shallowReadonlyHandlers } from './baseHandler'
 
@@ -36,5 +37,9 @@ export function isReadonly(value){
 
 
 function createReactiveObject(target,baseHandler){
+  if(!isObject(target)){
+    console.warn(`target ${target} 必须是一个对象`);
+    return target    
+  }
   return new Proxy(target,baseHandler)
 }

@@ -21,7 +21,7 @@ export const App = {
       
       [
         h("p",{class:"green"},"hi"),h("p",{class:"blue"},"nangong, "+this.msg),
-        h(Foo)
+        h(Foo,{count:1})
       ]
       //  {id:"root"},"hi, " + this.msg
        );
