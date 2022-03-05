@@ -49,7 +49,14 @@ function mountElement(vnode,container){
 
   // 属性
   for(const key in props){
-    el.setAttribute(key,props[key])
+    // 判断是否是事件注册
+    const isOn = (key:string) => (/^on[A-Z]/.test(key))
+    if(isOn(key)){
+      const event = key.slice(2).toLowerCase()
+      el.addEventListener(event,props[key]) 
+    }else{
+      el.setAttribute(key,props[key])
+    }
   }
   // 添加到根标签上
   container.append(el)
