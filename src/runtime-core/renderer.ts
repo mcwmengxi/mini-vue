@@ -4,17 +4,17 @@ import { createComponentInstance, setupComponent } from "./component"
 import { Fragment, Text } from './vnode';
 
 export function render(vnode:any, container:any){
-  patch(vnode,container)
+  patch(vnode,container,null)
 }
 
 // 
-function patch(vnode,container){
+function patch(vnode,container,parentComponent){
   // 原生标签,采用位运算符比较
   const { shapeFlag, type } = vnode
 
   switch(type){
     case Fragment:
-      processFragment(vnode,container)
+      processFragment(vnode,container,parentComponent)
       break
     case Text:
       processText(vnode,container)
@@ -22,17 +22,17 @@ function patch(vnode,container){
     default :
       // 按位与 相等的判断
       if(shapeFlag & ShapeFlags.ELEMENT){
-        processElement(vnode,container)
+        processElement(vnode,container,parentComponent)
       }else if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT){
         // 处理组件
-        processComponent(vnode,container)
+        processComponent(vnode,container,parentComponent)
       }
       break
   }
 }
-function processFragment(vnode,container){
+function processFragment(vnode,container,parentComponent){
   // 直接渲染子节点
-  mountChildren(vnode,container)
+  mountChildren(vnode,container,parentComponent)
 }
 // 文本节点添加
 function processText(vnode,container){
@@ -40,25 +40,25 @@ function processText(vnode,container){
   const textNode  = (vnode.el = document.createTextNode(children))
   container.append(textNode )
 }
-function processElement(vnode,container){
-  mountElement(vnode,container)
+function processElement(vnode,container,parentComponent){
+  mountElement(vnode,container,parentComponent)
 }
 
-function processComponent(vnode,container){
-  mountComponent(vnode,container)
+function processComponent(vnode,container,parentComponent){
+  mountComponent(vnode,container,parentComponent)
 }
 
 // vnode==>initialVNode 更加语义化
-function mountComponent(initialVNode,container){
+function mountComponent(initialVNode,container,parentComponent){
   // 创建组件实例
-  const instance = createComponentInstance(initialVNode)
+  const instance = createComponentInstance(initialVNode,parentComponent)
 
    // setup的时候给组件添加代理对象
   setupComponent(instance)
   setupRenderEffect(instance,initialVNode,container)
 }
 
-function mountElement(vnode,container){
+function mountElement(vnode,container,parentComponent){
   // 创建真实dom,同时把el放在VNode节点上
   // const el = document.createElement(vnode.type)
   const el = (vnode.el = document.createElement(vnode.type));
@@ -67,7 +67,7 @@ function mountElement(vnode,container){
   if(shapeFlag & ShapeFlags.TEXT_CHILDREN){
     el.textContent = children
   }else if(shapeFlag & ShapeFlags.ARRAY_CHILDREN){
-    mountChildren(vnode,el)
+    mountChildren(vnode,el,parentComponent)
   }
 
   // 属性
@@ -85,10 +85,10 @@ function mountElement(vnode,container){
   container.append(el)
 }
 
-function mountChildren(vnode,container){
+function mountChildren(vnode,container,parentComponent){
   vnode.children.forEach(v => {
     // 递归添加子标签
-    patch(v,container)
+    patch(v,container,parentComponent)
   });
 }
 
@@ -103,7 +103,7 @@ function setupRenderEffect(instance,initialVNode,container){
   // }
 
   // 递归遍历
-  patch(subTree,container)
+  patch(subTree,container,instance)
 
   initialVNode.el = subTree.el
 
