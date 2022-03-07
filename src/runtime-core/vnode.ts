@@ -1,5 +1,8 @@
 import { ShapeFlags } from "../shared/shapeFlags"
 
+export const Fragment = Symbol('Fragment')
+export const Text = Symbol('Text')
+
 export function createVNode(type,props?,children?){
   const vnode = {
     type,
@@ -26,6 +29,9 @@ export function createVNode(type,props?,children?){
   return vnode
 }
 
+export function createTextVNode(text:string){
+  return createVNode(Text,{},text)
+}
 function getShapeFlag(type){
   // 判断标签是文本还是普通组件
   return typeof type === 'string' ? ShapeFlags.ELEMENT : ShapeFlags.STATEFUL_COMPONENT

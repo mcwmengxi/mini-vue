@@ -1,6 +1,7 @@
 import { ShapeFlags } from '../shared/shapeFlags';
 import { isObject } from './../shared/index';
 import { createComponentInstance, setupComponent } from "./component"
+import { Fragment, Text } from './vnode';
 
 export function render(vnode:any, container:any){
   patch(vnode,container)
@@ -9,26 +10,46 @@ export function render(vnode:any, container:any){
 // 
 function patch(vnode,container){
   // 原生标签,采用位运算符比较
-  const { shapeFlag } = vnode
+  const { shapeFlag, type } = vnode
 
-  // 按位与 相等的判断
-  if(shapeFlag & ShapeFlags.ELEMENT){
-    processElement(vnode,container)
-  }else if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT){
-    // 处理组件
-    processComponent(vnode,container)
+  switch(type){
+    case Fragment:
+      processFragment(vnode,container)
+      break
+    case Text:
+      processText(vnode,container)
+      break
+    default :
+      // 按位与 相等的判断
+      if(shapeFlag & ShapeFlags.ELEMENT){
+        processElement(vnode,container)
+      }else if(shapeFlag & ShapeFlags.STATEFUL_COMPONENT){
+        // 处理组件
+        processComponent(vnode,container)
+      }
+      break
   }
 }
-
+function processFragment(vnode,container){
+  // 直接渲染子节点
+  mountChildren(vnode,container)
+}
+// 文本节点添加
+function processText(vnode,container){
+  const { children } = vnode
+  const textNode  = (vnode.el = document.createTextNode(children))
+  container.append(textNode )
+}
 function processElement(vnode,container){
   mountElement(vnode,container)
 }
 
 function processComponent(vnode,container){
-  mountcomponent(vnode,container)
+  mountComponent(vnode,container)
 }
+
 // vnode==>initialVNode 更加语义化
-function mountcomponent(initialVNode,container){
+function mountComponent(initialVNode,container){
   // 创建组件实例
   const instance = createComponentInstance(initialVNode)
 
