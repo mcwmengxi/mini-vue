@@ -1,6 +1,6 @@
 import { effect } from '../reactivity/effect';
 import { ShapeFlags } from '../shared/shapeFlags';
-import { isObject } from './../shared/index';
+import { EMPTY_OBJ, isObject } from './../shared/index';
 import { createComponentInstance, setupComponent } from "./component"
 import { createAppAPI } from './createApp';
 import { Fragment, Text } from './vnode';
@@ -84,7 +84,8 @@ export function createRenderer(options){
       // }else{
       //   el.setAttribute(key,props[key])
       // }
-      hostPatchProp(el,key,props[key])
+      const val = props[key]
+      hostPatchProp(el,key,null,val)
     }
     // 添加到根标签上
     // container.append(el)
@@ -94,7 +95,37 @@ export function createRenderer(options){
     console.log("patchElement");
     console.log("n1", n1);
     console.log("n2", n2);
+    // 新旧属性对比
+    const oldProps = n1.props || EMPTY_OBJ
+    const newProps = n2.props || EMPTY_OBJ
+    // 让新节点和旧节点el属性一致
+    const el = (n2.el = n1.el)
+
+    patchProps(el,oldProps,newProps)
   }
+
+  function patchProps(el,oldProps,newProps){
+    if(oldProps !== newProps){
+      for (const key in newProps) {
+        // 新旧prop属性对比
+        const prevProp = oldProps[key]
+        const nextProp = newProps[key];
+        // 更新
+        if(prevProp !== nextProp){
+          hostPatchProp(el, key, prevProp, nextProp)
+        }
+      }
+    }
+    if(oldProps !== EMPTY_OBJ){
+      for (const key in oldProps) {
+        // 不在新的props中
+        if(!(key in newProps)){
+          hostPatchProp(el, key, oldProps[key], null)
+        }
+      }
+    }
+  }
+
   function mountChildren(vnode,container,parentComponent){
     vnode.children.forEach(v => {
       // 递归添加子标签
@@ -134,7 +165,9 @@ export function createRenderer(options){
         console.log("初始化");
         
         const { proxy } = instance
-        const subTree = instance.render.call(proxy)
+        // 给实例的subTree赋值，给更新的时候使用
+        const subTree = (instance.subTree = instance.render.call(proxy))
+        
         // 递归遍历
         patch(null, subTree, container, instance)
         initialVNode.el = subTree.el
@@ -143,7 +176,7 @@ export function createRenderer(options){
         // 组件更新
         console.log("组件更新");
         const { proxy } = instance
-        const subTree = instance.render.call(proxy)
+        const subTree = instance.render.call(proxy)     
     
         const prevSubTree = instance.subTree
         instance.subTree = subTree
