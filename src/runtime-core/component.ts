@@ -34,11 +34,14 @@ function setupStatefulComponent(instance: any){
   const { setup } = Component
 
   if(setup){
+    setCurrentInstance(instance)
     // 调用组件的setup()方法，同时传入props参数,传入实例下的emit
     const setupResult = setup(shallowReadonly(instance.props),{
       emit:instance.emit
     })
 
+    // 重置当前实例
+    setCurrentInstance(null)
     handleSetupResult(instance,setupResult)
   }
 }
@@ -56,4 +59,12 @@ function handleSetupResult(instance,setupResult){
 function finishComponentSetup(instance){
   const Component = instance.type
   instance.render = Component.render
+}
+let currentInstance = null
+export function setCurrentInstance(instance){
+  currentInstance = instance
+}
+
+export function getCurrentInstance(){
+  return currentInstance
 }
