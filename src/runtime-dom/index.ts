@@ -21,10 +21,12 @@ function patchProp(el,key,prevVal,nextVal){
   }
 }
 
-function insert(el,parent){
-  parent.append(el)
+// function insert(el,parent){
+//   parent.append(el)
+// }
+function insert(child,parent,anchor){
+  parent.insertBefore(child, anchor || null)
 }
-
 // 移除该节点
 function remove(child){
   const parent = child.parentNode
