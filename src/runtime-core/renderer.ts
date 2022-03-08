@@ -201,7 +201,7 @@ export function createRenderer(options){
     if(i > e1){
       if(i<=e2){
         const nextPos = e2 + 1
-        const anchor = nextPos < l2 ? c2[nextPos].el : null;
+        const anchor = nextPos < l2 ? c2[nextPos].el : parentAnchor;
         // const anchor = nextPos<l2 ? c2[nextPos].el : parentAnchor
         while( i<=e2){
           patch(null,c2[i],container,parentComponent,anchor)
@@ -235,6 +235,9 @@ export function createRenderer(options){
       // 需要处理新节点的数量
       const toBePatched = e2 - s2 + 1;
       let patched = 0
+      let moved = false;
+      // 最长递增子序列长度
+      let maxNewIndexSoFar = 0;
       // 初始化 从新的index映射为老的index
       // 创建数组的时候给定数组的长度，这个是性能最快的写法
       // 初始化为 0 , 后面处理的时候 如果发现是 0 的话，那么就说明新值在老的里面不存在
@@ -277,11 +280,148 @@ export function createRenderer(options){
         }else{
           // 新老节点都存在
           console.log("新老节点都存在");
+          // 来确定中间的节点是不是需要移动
+          // 新的 newIndex 如果一直是升序的话，那么就说明没有移动
+          // 所以我们可以记录最后一个节点在新的里面的索引，然后看看是不是升序
+          // 不是升序的话，我们就可以确定节点移动过了
+          if(newIndex >= maxNewIndexSoFar){
+            maxNewIndexSoFar = newIndex
+          }else{
+            moved = true
+          }
+          // 把新节点的索引和老的节点的索引建立映射关系
+          // i + 1 是因为 i 有可能是0 (0 的话会被认为新节点在老的节点中不存在)
+          newIndexToOldIndexMap[newIndex-s2] = i + 1
+
           patch(prevChild, c2[newIndex], container, parentComponent, null)
           patched++
         }
       }
+
+      // 利用最长递增子序列来优化移动逻辑
+      // 因为元素是升序的话，那么这些元素就是不需要移动的
+      // 而我们就可以通过最长递增子序列来获取到升序的列表
+      // 在移动的时候我们去对比这个列表，如果对比上的话，就说明当前元素不需要移动
+      // 通过 moved 来进行优化，如果没有移动过的话 那么就不需要执行算法
+      // getSequence 返回的是 newIndexToOldIndexMap 的索引值
+      // 所以后面我们可以直接遍历索引值来处理，也就是直接使用 toBePatched 即可
+      const increasingNewIndexSequence = moved ? getSequence(newIndexToOldIndexMap) : [];
+      let j = increasingNewIndexSequence.length -1
+      // 遍历新节点
+      // 1. 需要找出老节点没有，而新节点有的 -> 需要把这个节点创建
+      // 2. 最后需要移动一下位置，比如 [c,d,e] -> [e,c,d]
+
+      // 这里倒循环是因为在 insert 的时候，需要保证锚点是处理完的节点（也就是已经确定位置了）
+      // 因为 insert 逻辑是使用的 insertBefore()
+      for(let i= toBePatched-1; i >= 0; i--){
+        // 确定当前要处理的节点索引
+        const nextIndex = i + s2
+        const nextChild = c2[nextIndex]
+        // 锚点等于当前节点索引+1
+        // 也就是当前节点的后面一个节点(又因为是倒遍历，所以锚点是位置确定的节点)
+        const anchor = nextIndex + 1 < l2 ? c2[nextIndex + 1].el : parentAnchor
+        if(newIndexToOldIndexMap[i]===0){
+          // 说明新节点在老的里面不存在
+          // 需要创建
+          patch(null,nextChild,container,parentComponent,anchor)
+        }else if(moved){
+          // 需要移动
+          // 1. j 已经没有了 说明剩下的都需要移动了
+          // 2. 最长子序列里面的值和当前的值匹配不上， 说明当前元素需要移动
+          if(j < 0 || increasingNewIndexSequence[j] !== i ){
+            // 
+            hostInsert(nextChild.el, container, anchor);
+          }
+        }else{
+          // 这里就是命中了  index 和 最长递增子序列的值
+          // 所以可以移动指针了
+          j--
+        }
+      }
     }
+  }
+  // 获取最长递增子序列
+  // function getSequence(nums){
+  //     var arr = [nums[0]]
+  //     var position = [0]
+  //     for(let i = 1; i < nums.length; i++){
+  //       if(nums[i] > arr[arr.length-1]){
+  //         arr.push(nums[i])
+  //         position.push(arr.length-1)
+  //       }else{
+  //         // for(let j = 0; j < arr.length; j++){
+  //         //   if(arr[j] >= nums[i]){
+  //         //     arr[j] = nums[i]
+  //         //     break
+  //         //   }
+  //         // }
+  //         // 二分查找
+  //         let l = 0,r = arr.length-1
+  //         while(l<=r){
+  //           let mid = ~~((l + r) / 2)
+  //           if(nums[i] > arr[mid]){
+  //             l = mid + 1
+  //           }
+  //           else if(nums[i] < arr[mid]){
+  //             r = mid -1
+  //           }
+  //           else{
+  //             l = mid
+  //             break
+  //           }
+  //         }
+  //         arr[l] = nums[i]
+  //         position.push(l)
+  //       }
+  //     }
+  //     let cur = arr.length - 1
+  //     for(let i = position.length-1;i >= 0 && cur>=0 ;i--) {
+  //       if(cur === position[i]){
+  //         arr[cur--] = i
+  //       }
+  //     }
+  //     return arr
+  // }
+
+  function getSequence(arr: number[]): number[] {
+    const p = arr.slice();
+    const result = [0];
+    let i, j, u, v, c;
+    const len = arr.length;
+    for (i = 0; i < len; i++) {
+      const arrI = arr[i];
+      if (arrI !== 0) {
+        j = result[result.length - 1];
+        if (arr[j] < arrI) {
+          p[i] = j;
+          result.push(i);
+          continue;
+        }
+        u = 0;
+        v = result.length - 1;
+        while (u < v) {
+          c = (u + v) >> 1;
+          if (arr[result[c]] < arrI) {
+            u = c + 1;
+          } else {
+            v = c;
+          }
+        }
+        if (arrI < arr[result[u]]) {
+          if (u > 0) {
+            p[i] = result[u - 1];
+          }
+          result[u] = i;
+        }
+      }
+    }
+    u = result.length;
+    v = result[u - 1];
+    while (u-- > 0) {
+      result[u] = v;
+      v = p[v];
+    }
+    return result;
   }
   function mountChildren(children,container,parentComponent, anchor){
     children.forEach(v => {
