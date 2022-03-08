@@ -199,11 +199,6 @@ export function createRenderer(options){
     // i=1 e1=0 e2=1 
     // 经过 1、2 直接将旧结点比对完，则剩下的新结点直接 mount，此时 i > e1
     if(i > e1){
-      // const nextPos = e2 + 1
-      // const anchor = nextPos<l2 ? c2[nextPos].el : parentAnchor
-      // for(let j=i; j<=e2; j++){
-      //   patch(null,c2[j],container,parentComponent,anchor)
-      // }
       if(i<=e2){
         const nextPos = e2 + 1
         const anchor = nextPos < l2 ? c2[nextPos].el : null;
@@ -218,16 +213,74 @@ export function createRenderer(options){
       // a b c 
       // i=1 e1=1 e2=0 
       // 经过 1、2 直接将新结点比对完，则剩下的旧结点直接 `unmount`，此时 `i > e2` 
-      // for(let j=i; j<=e1; j++){
-      //   hostRemove(c1[j].el)
-      // }
       while (i <= e1) {
         hostRemove(c1[i].el);
         i++;
       }
     }else{
       // 若不满足 3，采用传统 diff 算法，但不真的添加和移动，只做标记和删除 取得一个 source 数组
+      // 左右两边都比对完了，然后剩下的就是中间部位顺序变动的
+      // a,b,[c,d,e],f,g
+      // a,b,[e,c,d],f,g
+      // i=2,e1=4,e2=4
+      let s1 = i
+      let s2 = i
+      const keyToNewIndexMap  = new Map() 
+      // 先把 key 和 newIndex 绑定好，方便后续基于 key 找到 newIndex
+      // 时间复杂度是 O(1)
+      for(let i=s2; i<=e2; i++){
+        const nextChild = c2[i]
+        keyToNewIndexMap.set(nextChild.key,i)
+      }
+      // 需要处理新节点的数量
+      const toBePatched = e2 - s2 + 1;
+      let patched = 0
+      // 初始化 从新的index映射为老的index
+      // 创建数组的时候给定数组的长度，这个是性能最快的写法
+      // 初始化为 0 , 后面处理的时候 如果发现是 0 的话，那么就说明新值在老的里面不存在
+      const newIndexToOldIndexMap = new Array(toBePatched).fill(0)
+      // for(let i=0; i<toBePatched; i++) {
+      //   newIndexToOldIndexMap[i] = 0
+      // }
 
+      // 遍历老节点
+      // 1. 需要找出老节点有，而新节点没有的 -> 需要把这个节点删除掉
+      // 2. 新老节点都有的，—> 需要 patch
+      for(let i=s1; i<=e1; i++){
+        const prevChild = c1[i]
+        // 优化点
+        // patched为已更新的节点数量，如果patched大于toBePatched需要处理新节点的数量的话，那么之后在处理老节点的时候就直接删除即可
+        if(patched >= toBePatched){
+          hostRemove(prevChild.el)
+          continue
+        }
+
+        let newIndex 
+        if(prevChild.key != null){
+          // 旧节点在新节点中对应的下标
+          newIndex = keyToNewIndexMap.get(prevChild.key)
+        }else{
+          // 如果没key 的话，那么只能是遍历所有的新节点来确定当前节点存在不存在了
+          for(let j = s2; j <= e2; j++){
+            if(isSameTypeVNode(prevChild,c2[j])){
+              newIndex = j
+              break
+            }
+          }
+        }
+
+        // 因为有可能 nextIndex 的值为0（0也是正常值）
+        // 所以需要通过值是不是 undefined 或者 null 来判断
+        if(newIndex === undefined){
+          // 当前节点的key 不存在于新节点中，需要把当前节点给删除掉
+          hostRemove(prevChild.el)
+        }else{
+          // 新老节点都存在
+          console.log("新老节点都存在");
+          patch(prevChild, c2[newIndex], container, parentComponent, null)
+          patched++
+        }
+      }
     }
   }
   function mountChildren(children,container,parentComponent, anchor){
@@ -237,10 +290,14 @@ export function createRenderer(options){
     });
   }
   function unmountChildren(children){
-    children.forEach((element,index) => {
-      const el = element.el
-      hostRemove(el)
-    });
+    // children.forEach((element,index) => {
+    //   const el = element.el
+    //   hostRemove(el)
+    // });
+    for (let i = 0; i < children.length; i++) {
+      const el = children[i].el;
+      hostRemove(el);
+    }
   }
   function processComponent(n1, n2, container,parentComponent, anchor){
     mountComponent(n2,container,parentComponent, anchor)

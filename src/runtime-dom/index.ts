@@ -30,7 +30,9 @@ function insert(child,parent,anchor){
 // 移除该节点
 function remove(child){
   const parent = child.parentNode
-  parent.removeChild(child)
+  if(parent){
+    parent.removeChild(child)
+  }
 }
 
 // 设置文本
