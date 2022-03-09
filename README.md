@@ -98,10 +98,10 @@ console.log(typeof str); // string
 - [✔️] 支持 getCurrentInstance
 - [✔️] 支持 provide/inject
 - [✔️] 支持 $el api
-- [✖️] 更新 element 类型
-- [✖️] 支持 Text 类型节点
-- [✖️] nextTick 的实现
-- [✖️] 支持最基础的 slots
+- [✔️] 更新 element 类型
+- [✔️] 支持 Text 类型节点
+- [✔️] nextTick 的实现
+- [✔️] 支持最基础的 slots
 ### compiler-core
 - [✖️] Parse AST的实现
 - [✖️] Transform AST优化
