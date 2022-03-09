@@ -4,6 +4,7 @@ import { EMPTY_OBJ, isObject } from './../shared/index';
 import { createComponentInstance, setupComponent } from "./component"
 import { shouldUpdateComponent } from './componentUpdateUtils';
 import { createAppAPI } from './createApp';
+import { queueJob } from './scheduler';
 import { Fragment, Text } from './vnode';
 
 export function createRenderer(options){
@@ -96,9 +97,9 @@ export function createRenderer(options){
     hostInsert(el,container,anchor)
   }
   function patchElement(n1, n2, container,parentComponent, anchor){
-    console.log("patchElement");
-    console.log("n1", n1);
-    console.log("n2", n2);
+    // console.log("patchElement");
+    // console.log("n1", n1);
+    // console.log("n2", n2);
     // 新旧属性对比
     const oldProps = n1.props || EMPTY_OBJ
     const newProps = n2.props || EMPTY_OBJ
@@ -508,7 +509,7 @@ export function createRenderer(options){
         instance.isMounted = true
       }else{
         // 组件更新
-        console.log("组件更新");
+        // console.log("组件更新");
         const { proxy, next, vnode } = instance
         // 如果有 next 的话， 说明需要更新组件的数据（props，slots 等）
         // 先更新组件的数据，然后更新完成后，在继续对比当前组件的子元素
@@ -520,6 +521,12 @@ export function createRenderer(options){
         const prevSubTree = instance.subTree
         instance.subTree = subTree
         patch(prevSubTree,subTree,container,instance, anchor)
+      }
+    },{
+      scheduler:()=>{
+        // 把 effect 推到微任务的时候在执行
+        // queueJob(effect);
+        queueJob(instance.update)
       }
     })
   
